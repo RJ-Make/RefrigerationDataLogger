@@ -6,8 +6,8 @@
 #include "EmonLib.h"
 // how many milliseconds between grabbing data and logging it. 1000 ms is once a second
 // NOTE **** Takes about 6.7 seconds to grab the temperature and humidity from all 3 sensors so this would be in adition to LOG_INTERVAL
-int LogInterval = 7; // Seconds between entries (reduce to take more/faster data)
-// how many Seconds before writing the logged data permanently to disk
+int LogInterval = 7; // mills between entries (reduce to take more/faster data)
+// how many milliseconds before writing the logged data permanently to disk
 // set it to the LOG_INTERVAL to write each time (safest)
 // set it to 10*LOG_INTERVAL to write all data every 10 datareads, you could lose up to 
 // the last 10 reads if power is lost but it uses less power and is much faster!
@@ -153,10 +153,13 @@ void StartLogging(){
 		// delay for the amount of time we want between readings
 		delay(((LogInterval * 1000) -1) - (millis() % (LogInterval * 1000)));
 		// Get Light Readings
+		//Serial.println(F("Getting Light"));
 		GetLight();
 		//Get Current Reading
+		//Serial.println(F("Getting Current"));
 		GetCurrent();
 		//Get Temps
+		//Serial.println(F("Getting Temps"));
 		GetDHT();
 		// Write the Information to the SD Card
 		WriteToSDCard();
@@ -271,7 +274,8 @@ logfile.flush();
 
 //// GET THE CURRENT TEMP AND HUM READINGS ////
 void GetDHT(){
-	
+	//Lets reset the error light now.
+	digitalWrite(redLEDpin, LOW);
 	if (IncludeREFSens = 1)
 	{ 
 		delay(dhtREF.getMinimumSamplingPeriod());
@@ -473,41 +477,25 @@ void error(int errortype)
 		 }
 	case 5:
 	Serial.println(F("error: Could Not Read AMB. Temp Sensor"));
-			 while(1){
-				 digitalWrite(greenLEDpin,LOW);
 				 digitalWrite(redLEDpin, HIGH);
-				 delay(5000);
-				 digitalWrite(redLEDpin, LOW);
-				 delay(3000);
-			 }
+				 // Try and re ini sensor
+				 dhtAMB.setup(AMB_HUMIDITY_SENSOR_DIGITAL_PIN);
 	case 6:
 	Serial.println(F("error: Could Not Read FRE. Temp Sensor"));
-			 while(1){
-				 digitalWrite(greenLEDpin,LOW);
 				 digitalWrite(redLEDpin, HIGH);
-				 delay(5000);
-				 digitalWrite(redLEDpin, LOW);
-				 delay(2000);
-			 }
+				// Try and re ini sensor
+				dhtFRE.setup(FRE_HUMIDITY_SENSOR_DIGITAL_PIN);
 	break;
 	case 7:
 	Serial.println(F("error: Could Not Read REF. Temp Sensor"));
-			 while(1){
-				 digitalWrite(greenLEDpin,LOW);
 				 digitalWrite(redLEDpin, HIGH);
-				 delay(5000);
-				 digitalWrite(redLEDpin, LOW);
-				 delay(1000);
-			 }
+				// Try and re ini sensor
+				dhtREF.setup(REF_HUMIDITY_SENSOR_DIGITAL_PIN);
 	break;
 	case 8:
 	Serial.println(F("error: Log File Not Open"));
 	break;
 	}
-	//// red LED indicates error
-	//digitalWrite(redLEDpin, HIGH);
-	//digitalWrite(greenLEDpin,LOW);
-	//while(1);
 }
 
 //////////////////////////// SETTINGS SECTION BELOW ////////////////////////////
